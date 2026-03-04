@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Training Evaluation</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <%- include('partials/_header', { activePage: activePage }) %>
+  <div class="container">
+    <% if (isAuthenticated) { %>
+    <div class="page-actions">
+      <a href="/activities/refresh-cache" class="btn">🔄 Refresh cache</a>
+    </div>
+    <% } %>
+    <h1>📊 Trainingsevaluatie</h1>
+    
+    <% if (weeks && weeks.length > 0) { %>
+      <div class="week-grid">
+        <% weeks.forEach(function(week) { %>
+          <a href="/evaluation/<%= week.week_nr %>" class="week-card">
+            <div class="week-number">Week <%= week.iso_week %></div>
+            <div style="color:#999; font-size:0.9em; margin-bottom:10px;"><%= week.start_date %> tot <%= week.end_date %></div>
+            <div style="color:#bbb; font-size:0.85em; margin-bottom:10px;">Trainingsweek <%= week.blok_week %></div>
+            <h3><%= week.year %></h3>
+            <div class="stats">
+              <div class="stat-row">
+                <span class="stat-label">📋 Geplande workouts:</span>
+                <span class="stat-value" id="week-<%= week.week_nr %>-planned">...</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">✅ Afgewerkte:</span>
+                <span class="stat-value" id="week-<%= week.week_nr %>-actual">...</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">🏃 Geplande km:</span>
+                <span class="stat-value" id="week-<%= week.week_nr %>-planned-km">...</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">✅ Afgewerkte km:</span>
+                <span class="stat-value" id="week-<%= week.week_nr %>-actual-km">...</span>
+              </div>
+              <div id="week-<%= week.week_nr %>-status"></div>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div style="background: white; padding: 40px; text-align: center; border-radius: 8px;">
+        <p style="color: #666;">Geen trainingsweken gevonden.</p>
+      </div>
+    <% } %>
+  </div>
+
+  <script>
+    function loadWeekStats(weekNumber) {
+      fetch(`/evaluation/${weekNumber}`)
+        .then(r => r.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const totals = doc.querySelector('[data-totals]');
+          
+          if (totals) {
+            const data = JSON.parse(totals.dataset.totals);
+            document.getElementById(`week-${weekNumber}-planned`).textContent = data.workouts_planned;
+            document.getElementById(`week-${weekNumber}-actual`).textContent = data.workouts_actual;
+            document.getElementById(`week-${weekNumber}-planned-km`).textContent = data.planned_km + ' km';
+            document.getElementById(`week-${weekNumber}-actual-km`).textContent = data.actual_km + ' km';
+            
+            const statusEl = document.getElementById(`week-${weekNumber}-status`);
+            const actual = parseFloat(data.actual_km);
+            const planned = parseFloat(data.planned_km);
+            
+            let status = 'planned';
+            if (actual > 0) {
+              if (Math.abs(actual - planned) < 0.5) status = 'matched';
+              else if (actual > planned * 1.1) status = 'exceeded';
+              else if (actual < planned * 0.9) status = 'under';
+              else status = 'partial';
+            }
+            
+            const badges = {
+              matched: '✅ Perfect',
+              exceeded: '🔥 Over het plan heen',
+              under: '⏱️ Onder het plan',
+              partial: '⚠️ Gedeeltelijk',
+              planned: '📅 Gepland'
+            };
+            
+            statusEl.innerHTML = `<div class="status-badge status-${status}">${badges[status]}</div>`;
+          }
+        })
+        .catch(e => console.error('Error loading stats:', e));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.week-card');
+      cards.forEach(card => {
+        const href = card.getAttribute('href');
+        const weekMatch = href.match(/\/evaluation\/(\d+)/);
+        if (weekMatch) {
+          const weekNum = weekMatch[1];
+          loadWeekStats(weekNum);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

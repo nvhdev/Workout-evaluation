@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Week Evaluation Detail</title>
+  <link rel="stylesheet" href="/styles.css">
+
+</head>
+<body>
+  <%- include('partials/_header', { activePage: activePage }) %>
+  <div class="container">
+    <div class="header">
+      <div class="breadcrumb">
+        <a href="/evaluation">← Terug naar evaluatie overzicht</a>
+      </div>
+      <% if (isAuthenticated) { %>
+      <div class="page-actions" style="margin-bottom:10px;">
+        <a href="/evaluation/<%= week.week_nr %>/refresh-cache" class="btn">🔄 Refresh cache</a>
+      </div>
+      <% } %>
+      <h1>🏃 Training Evaluation - Week <%= week.iso_week %> (<%= week.start_date %> tot <%= week.end_date %>)</h1>
+      <div style="color:#999; font-size:0.9em; margin-top:5px;">Trainingsschema Week <%= week.blok_week %></div>
+    </div>
+
+    <% if (comparison.totals) { %>
+      <div class="week-summary">
+        <div class="summary-stat">
+          <div class="summary-label">📋 Geplande workouts</div>
+          <div class="summary-value"><%= comparison.totals.workouts_planned %></div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-label">✅ Afgewerkte workouts</div>
+          <div class="summary-value"><%= comparison.totals.workouts_actual %></div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-label">🏃 Geplande km</div>
+          <div class="summary-value"><%= comparison.totals.planned_km %> km</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-label">✅ Afgewerkte km</div>
+          <div class="summary-value"><%= comparison.totals.actual_km %> km</div>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="days-list">
+      <% if (comparison.days && comparison.days.length > 0) { %>
+        <% comparison.days.forEach(function(day) { %>
+          <div class="day-card">
+            <div class="day-header">
+              <div class="day-date">📅 <%= day.date %> - <%= day.dag %></div>
+              <div class="day-stats">
+                <div class="day-stat">📋 <%= day.summary.workouts_planned %> gepland</div>
+                <div class="day-stat">✅ <%= day.summary.workouts_actual %> afgewerkt</div>
+              </div>
+            </div>
+
+            <div class="day-content">
+              <% if (day.planned.length > 0) { %>
+                <div class="section">
+                  <div class="section-title">📋 Geplande workouts (<%= day.planned.length %>)</div>
+                  <% day.planned.forEach(function(wo) { %>
+                    <div class="workout workout-planned">
+                      <div class="workout-title"><%= wo.titel %></div>
+                      <div class="workout-details">
+                        <div class="detail-item">
+                          <span class="detail-label">Type:</span>
+                          <span class="detail-value"><%= wo.type %></span>
+                        </div>
+                        <% if (wo.duurloop_duur_min !== '-') { %>
+                          <div class="detail-item">
+                            <span class="detail-label">Duur:</span>
+                            <span class="detail-value"><%= wo.duurloop_duur_min %> min</span>
+                          </div>
+                        <% } %>
+                        <% if (wo.geschat_totaal_km !== '-') { %>
+                          <div class="detail-item">
+                            <span class="detail-label">Afstand:</span>
+                            <span class="detail-value"><%= wo.geschat_totaal_km %> km</span>
+                          </div>
+                        <% } %>
+                        <% if (wo.duurloop_zone !== '-') { %>
+                          <div class="detail-item">
+                            <span class="detail-label">Zone:</span>
+                            <span class="detail-value"><%= wo.duurloop_zone %></span>
+                          </div>
+                        <% } %>
+                      </div>
+                      <div style="margin-top: 8px; color: #666; font-size: 0.9em; font-style: italic;">
+                        <%= wo.beschrijving %>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="section">
+                  <div class="section-title">📋 Geplande workouts</div>
+                  <div class="empty-message">Geen workouts gepland</div>
+                </div>
+              <% } %>
+
+              <% if (day.actual.length > 0) { %>
+                <div class="section">
+                  <div class="section-title">✅ Afgewerkte activiteiten (<%= day.actual.length %>)</div>
+                  <% day.actual.forEach(function(act, idx) { %>
+                    <div class="workout workout-actual">
+                      <div class="workout-title">
+                        <% if (act.laps && act.laps.length > 0) { %>
+                          <button class="expand-btn" onclick="toggleLaps(event, 'laps-<%= day.date %>-<%= idx %>')">▸</button>
+                        <% } %>
+                        <%= act.name %> <% if (act.private) { %>🔒<% } %>
+                      </div>
+                      <div class="workout-details">
+                        <div class="detail-item">
+                          <span class="detail-label">Type:</span>
+                          <span class="detail-value"><%= act.type %></span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Afstand:</span>
+                          <span class="detail-value"><%= act.distance %> km</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Duur:</span>
+                          <span class="detail-value"><%= act.moving_time %></span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Pace:</span>
+                          <span class="detail-value"><%= act.pace %> min/km</span>
+                        </div>
+                        <% if (act.avg_heartrate) { %>
+                          <div class="detail-item">
+                            <span class="detail-label">❤️ Avg HR:</span>
+                            <span class="detail-value"><%= Math.round(act.avg_heartrate) %> bpm</span>
+                          </div>
+                        <% } %>
+                        <% if (act.max_heartrate) { %>
+                          <div class="detail-item">
+                            <span class="detail-label">💔 Max HR:</span>
+                            <span class="detail-value"><%= Math.round(act.max_heartrate) %> bpm</span>
+                          </div>
+                        <% } %>
+                      </div>
+                      <% if (act.laps && act.laps.length > 0) { %>
+                        <div class="laps-section" id="laps-<%= day.date %>-<%= idx %>">
+                          <table class="laps-table">
+                            <thead>
+                              <tr>
+                                <th>Lap</th>
+                                <th>Afstand</th>
+                                <th>Pace</th>
+                                <th>Avg HR</th>
+                                <th>Max HR</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <% act.laps.forEach(function(lap, li) { %>
+                                <tr>
+                                  <td><%= li + 1 %></td>
+                                  <td><%= lap.distance %> km</td>
+                                  <td><%= lap.pace %> min/km</td>
+                                  <td><%= lap.avg_hr %></td>
+                                  <td><%= lap.max_hr %></td>
+                                </tr>
+                              <% }); %>
+                            </tbody>
+                          </table>
+                        </div>
+                      <% } %>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="section">
+                  <div class="section-title">✅ Afgewerkte activiteiten</div>
+                  <div class="empty-message">Geen activiteiten afgewerkt</div>
+                </div>
+              <% } %>
+
+              <div class="day-comparison">
+                <div class="comp-item">
+                  <div class="comp-label">Gepland</div>
+                  <div class="comp-value"><%= day.summary.planned_km %> km</div>
+                </div>
+                <div class="comp-item">
+                  <div class="comp-label">Afgewerkt</div>
+                  <div class="comp-value"><%= day.summary.actual_km %> km</div>
+                </div>
+                <div class="comp-item">
+                  <div class="comp-label">Status</div>
+                  <div class="status-badge status-<%= day.summary.status %>">
+                    <% 
+                      const statusTexts = {
+                        'matched': '✅ Perfect',
+                        'exceeded': '🔥 Over',
+                        'under': '⏱️ Onder',
+                        'partial': '⚠️ Gedeeltelijk',
+                        'planned': '📅 Gepland'
+                      };
+                    %>
+                    <%= statusTexts[day.summary.status] %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="no-workouts">
+          <p>Geen gegevens beschikbaar voor deze week.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div style="display:none;" data-totals='<%= JSON.stringify(comparison.totals) %>'></div>
+
+  <script>
+    function toggleLaps(event, elementId) {
+      event.preventDefault();
+      const btn = event.target;
+      const section = document.getElementById(elementId);
+      
+      if (section.classList.contains('expanded')) {
+        section.classList.remove('expanded');
+        btn.textContent = '▸';
+      } else {
+        section.classList.add('expanded');
+        btn.textContent = '▾';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trainingweek Detail</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <%- include('partials/_header', { activePage: activePage }) %>
+  <div class="container">
+    <div class="header">
+      <div class="breadcrumb">
+        <a href="/planning">← Terug naar weekoverzicht</a>
+      </div>
+      <h1>🏃 Training Week <%= week.iso_week %> (<%= week.start_date %> tot <%= week.end_date %>)</h1>
+      <div style="color:#999; font-size:0.9em; margin-top:5px;">Trainingsschema Week <%= week.blok_week %></div>
+    </div>
+
+    <% if (workouts && workouts.length > 0) { %>
+      <% 
+        const total_km = workouts.reduce((sum, w) => sum + (isNaN(parseFloat(w.geschat_totaal_km)) ? 0 : parseFloat(w.geschat_totaal_km)), 0);
+        const is_recovery = workouts[0].herstelweek;
+      %>
+      
+      <div class="summary-bar">
+        <div class="summary-stats">
+          <div class="stat">
+            <div class="stat-label">📋 Workouts</div>
+            <div class="stat-value"><%= workouts.length %></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">🏃 Totaal km</div>
+            <div class="stat-value"><%= total_km.toFixed(1) %> km</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">💤 Herstelweek</div>
+            <div class="stat-value"><%= is_recovery ? 'Ja' : 'Nee' %></div>
+            <% if (is_recovery) { %>
+              <div class="recovery-badge">Recovery / Restauratie</div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="workouts">
+        <% workouts.forEach(function(wo) { %>
+          <div class="workout-card <%= wo.herstelweek ? 'recovery' : '' %>">
+            <div class="workout-header">
+              <div>
+                <div class="workout-date">
+                  <strong><%= wo.dag %>, <%= wo.datum %></strong>
+                </div>
+              </div>
+              <div class="workout-type"><%= wo.type %></div>
+            </div>
+
+            <h2 class="workout-title"><%= wo.titel %></h2>
+            <p class="workout-description"><%= wo.beschrijving %></p>
+
+            <div class="workout-details">
+              <% if (wo.duurloop_duur_min !== '-') { %>
+                <div class="detail-item">
+                  <div class="detail-label">⏱️ Duur</div>
+                  <div class="detail-value"><%= wo.duurloop_duur_min %> minuten</div>
+                </div>
+              <% } %>
+
+              <% if (wo.duurloop_zone !== '-') { %>
+                <div class="detail-item">
+                  <div class="detail-label">💓 Zone</div>
+                  <div class="detail-value zone"><%= wo.duurloop_zone %></div>
+                </div>
+              <% } %>
+
+              <% if (wo.pace_min_km !== '-' && wo.pace_max_km !== '-') { %>
+                <div class="detail-item">
+                  <div class="detail-label">⚡ Pace</div>
+                  <div class="detail-value"><%= wo.pace_min_km %> - <%= wo.pace_max_km %> min/km</div>
+                </div>
+              <% } %>
+
+              <% if (wo.hs_min_bpm !== '-' && wo.hs_max_bpm !== '-') { %>
+                <div class="detail-item">
+                  <div class="detail-label">❤️ Heart Rate</div>
+                  <div class="detail-value"><%= wo.hs_min_bpm %> - <%= wo.hs_max_bpm %> bpm</div>
+                </div>
+              <% } %>
+
+              <% if (wo.interval_type !== '-' && wo.interval_type !== '--') { %>
+                <div class="detail-item">
+                  <div class="detail-label">🔄 Interval Type</div>
+                  <div class="detail-value"><%= wo.interval_type %></div>
+                </div>
+              <% } %>
+
+              <% if (wo.interval_herhalingen !== '-' && wo.interval_herhalingen !== '--') { %>
+                <div class="detail-item">
+                  <div class="detail-label">Herhalingen</div>
+                  <div class="detail-value"><%= wo.interval_herhalingen %>x</div>
+                </div>
+              <% } %>
+
+              <% if (wo.interval_afstand_m !== '-' && wo.interval_afstand_m !== '--') { %>
+                <div class="detail-item">
+                  <div class="detail-label">Afstand</div>
+                  <div class="detail-value"><%= wo.interval_afstand_m %>m</div>
+                </div>
+              <% } %>
+
+              <% if (wo.interval_doel_pace !== '-' && wo.interval_doel_pace !== '--') { %>
+                <div class="detail-item">
+                  <div class="detail-label">Doel Pace</div>
+                  <div class="detail-value"><%= wo.interval_doel_pace %></div>
+                </div>
+              <% } %>
+
+              <% if (wo.geschat_totaal_km !== '-') { %>
+                <div class="detail-item">
+                  <div class="detail-label">📏 Geschat totaal</div>
+                  <div class="detail-value"><%= wo.geschat_totaal_km %> km</div>
+                </div>
+              <% } %>
+            </div>
+
+            <% if (wo.notitie !== '-') { %>
+              <div class="notitie">
+                <strong>📌 Notitie:</strong> <%= wo.notitie %>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="totals">
+        <h3>📊 Weeksamenvating</h3>
+        <div class="totals-grid">
+          <div class="stat">
+            <div class="stat-label">Totale afstand</div>
+            <div class="stat-value"><%= total_km.toFixed(1) %> km</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Aantal sessies</div>
+            <div class="stat-value"><%= workouts.length %></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Type week</div>
+            <div class="stat-value"><%= is_recovery ? 'Herstel' : 'Opbouw' %></div>
+          </div>
+        </div>
+      </div>
+
+    <% } else { %>
+      <div style="background: white; padding: 40px; text-align: center; border-radius: 8px;">
+        <p style="color: #666;">Geen workouts gevonden voor week <%= week.week_nr %></p>
+        <a href="/planning" style="color: #3498db; text-decoration: none;">← Terug</a>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

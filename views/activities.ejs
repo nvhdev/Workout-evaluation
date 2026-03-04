@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Strava Activities</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <%- include('partials/_header', { activePage: activePage }) %>
+  <div class="container">
+    <h1>Strava Activities</h1>
+
+  <% if (weekInfo) { %>
+    <p style="font-size: 0.85rem; color: #999;">
+      📅 Current: Week <%= weekInfo.currentWeekNumber %> — <%= weekInfo.currentStart %> to <%= weekInfo.currentEnd %> | 
+      Last: Week <%= weekInfo.lastWeekNumber %> — <%= weekInfo.lastStart %> to <%= weekInfo.lastEnd %>
+    </p>
+  <% } %>
+  
+  <% if (isAuthenticated) { %>
+    <div class="page-actions">
+      <a href="/activities/refresh-cache" class="btn">🔄 Refresh cache from Strava</a>
+    </div>
+  <% } %>
+
+  <% if (cacheStats) { %>
+    <p class="cache-info">
+      📦 Cache: <%= cacheStats.count %> activities
+      <% if (cacheStats.latest) { %>
+        (latest: <%= new Date(cacheStats.latest * 1000).toLocaleString() %>)
+      <% } %>
+    </p>
+  <% } %>
+
+  <% if (cacheStats) { %>
+    <div class="cache-banner">
+      ✓ Showing cached data. Click refresh to pull latest from Strava.
+    </div>
+  <% } %>
+
+  <h2>This Week <% if (weekInfo && weekInfo.currentWeekNumber) { %>(W<%= weekInfo.currentWeekNumber %>)<% } %></h2>
+  <% if (currentWeek.length === 0) { %>
+    <p>No activities recorded.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Start Time</th>
+          <th>Pace (min/km)</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% currentWeek.forEach(function(a){ %>
+        <tr>
+          <td style="width:28px; text-align:center;"><button class="expand-btn" data-id="<%= a.id %>">▸</button></td>
+          <td><%= a.name %> <% if (a.private) { %>🔒<% } %></td>
+          <td><%= a.type %></td>
+          <td><%= a.date %></td>
+          <td><%= a.startTime %></td>
+          <td><%= a.pace %></td>
+        </tr>
+        <tr class="detail-row" id="detail-<%= a.id %>" style="display:none; background:#fafafa;"><td colspan="6"></td></tr>
+      <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+
+  <h2>Last Week <% if (weekInfo && weekInfo.lastWeekNumber) { %>(W<%= weekInfo.lastWeekNumber %>)<% } %></h2>
+  <% if (lastWeek.length === 0) { %>
+    <p>No activities recorded.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Start Time</th>
+          <th>Pace (min/km)</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% lastWeek.forEach(function(a){ %>
+        <tr>
+          <td style="width:28px; text-align:center;"><button class="expand-btn" data-id="<%= a.id %>">▸</button></td>
+          <td><%= a.name %> <% if (a.private) { %>🔒<% } %></td>
+          <td><%= a.type %></td>
+          <td><%= a.date %></td>
+          <td><%= a.startTime %></td>
+          <td><%= a.pace %></td>
+        </tr>
+        <tr class="detail-row" id="detail-<%= a.id %>" style="display:none; background:#fafafa;"><td colspan="6"></td></tr>
+      <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+
+  <% if (markdown) { %>
+    <h2>Existing Markdown</h2>
+    <pre><%= markdown %></pre>
+  <% } %>
+  <% if (isAuthenticated) { %>
+  <% } %>
+  </div> <!-- container -->
+  <script>
+    // (export checkboxes removed)
+
+    // fetch and render laps when expand button clicked
+    async function fetchLaps(id) {
+      const r = await fetch(`/activities/${id}/laps`);
+      if (!r.ok) throw new Error('failed to fetch laps');
+      return r.json();
+    }
+
+    function renderLapsTable(laps) {
+      if (!laps || laps.length === 0) return '<div style="padding:8px; color:#666;">No lap/split data available.</div>';
+      let out = '<table style="width:100%; border-collapse:collapse; margin:8px 0;">';
+      out += '<thead><tr><th style="border:1px solid #ddd; padding:6px;">Distance (km)</th><th style="border:1px solid #ddd; padding:6px;">Pace</th><th style="border:1px solid #ddd; padding:6px;">Avg HR</th><th style="border:1px solid #ddd; padding:6px;">Max HR</th></tr></thead>';
+      out += '<tbody>';
+      laps.forEach(l => {
+        out += `<tr><td style="border:1px solid #eee; padding:6px;">${l.distance}</td><td style="border:1px solid #eee; padding:6px;">${l.pace}</td><td style="border:1px solid #eee; padding:6px;">${l.avg_hr || '-'}</td><td style="border:1px solid #eee; padding:6px;">${l.max_hr || '-'}</td></tr>`;
+      });
+      out += '</tbody></table>';
+      return out;
+    }
+
+    document.querySelectorAll('.expand-btn').forEach(btn => {
+      btn.addEventListener('click', async (ev) => {
+        const id = btn.dataset.id;
+        const detailRow = document.getElementById('detail-' + id);
+        if (!detailRow) return;
+        const cell = detailRow.querySelector('td');
+        if (detailRow.style.display === 'none') {
+          // open: fetch if empty
+          if (!cell.dataset.loaded) {
+            try {
+              btn.disabled = true;
+              const data = await fetchLaps(id);
+              cell.innerHTML = renderLapsTable(data.laps);
+              cell.dataset.loaded = '1';
+            } catch (e) {
+              cell.innerHTML = '<div style="padding:8px; color:crimson;">Failed to load laps</div>';
+            } finally {
+              btn.disabled = false;
+            }
+          }
+          detailRow.style.display = '';
+          btn.textContent = '▾';
+        } else {
+          detailRow.style.display = 'none';
+          btn.textContent = '▸';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

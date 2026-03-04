@@ -1,0 +1,14 @@
+<div class="header-bar">
+  <nav class="main-nav">
+    <a href="/" class="<%= activePage === 'home' ? 'active' : '' %>">Home</a>
+    <a href="/activities" class="<%= activePage === 'activities' ? 'active' : '' %>">Activiteiten</a>
+    <a href="/planning" class="<%= activePage === 'planning' ? 'active' : '' %>">Trainingsplan</a>
+    <a href="/evaluation" class="<%= activePage === 'evaluation' ? 'active' : '' %>">Evaluatie</a>
+  </nav>
+  <div class="auth-actions">
+    <% if (!isAuthenticated) { %>
+      <a href="/authorize?returnTo=<%= encodeURIComponent(returnTo) %>" class="btn">Log in met Strava</a>
+    <% } %>
+  </div>
+</div>
+<hr />

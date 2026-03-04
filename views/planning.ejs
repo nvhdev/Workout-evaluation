@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Planned Workouts</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <%- include('partials/_header', { activePage: activePage }) %>
+  <div class="container">
+    <h1>📅 Geplande Workouts</h1>
+    
+    <% if (weeks && weeks.length > 0) { %>
+      <div class="week-grid">
+        <% weeks.forEach(function(week) { %>
+          <div class="week-card" data-week="<%= week.week_nr %>" style="cursor:pointer;" onclick="loadWeekDetail(<%= week.week_nr %>)">
+            <div class="week-number">Week <%= week.iso_week %></div>
+            <div style="color:#999; font-size:0.9em; margin-bottom:15px;"><%= week.start_date %> tot <%= week.end_date %></div>
+            <div style="color:#bbb; font-size:0.85em; margin-bottom:10px;">Trainingsweek <%= week.blok_week %></div>
+            <h3><%= week.year %></h3>
+            <div class="stats">
+              <div class="stat-line">
+                <span>📋 Workouts:</span>
+                <span id="week-<%= week.week_nr %>-count" class="loading">Laden...</span>
+              </div>
+              <div class="stat-line">
+                <span>🏃 Totaal km:</span>
+                <span id="week-<%= week.week_nr %>-km" class="loading">Laden...</span>
+              </div>
+              <div id="recovery-<%= week.week_nr %>"></div>
+            </div>
+            <a href="/planning/<%= week.week_nr %>">Details bekijken →</a>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="loading">Geen trainingsweken gevonden. Voeg CSV bestanden toe aan /data/planning/</div>
+    <% } %>
+  </div>
+
+  <script>
+    // Load week summary when page loads
+    function loadWeekSummary(weekNumber) {
+      fetch(`/planning/${weekNumber}/summary`)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById(`week-${weekNumber}-count`).textContent = data.workouts_count;
+          document.getElementById(`week-${weekNumber}-km`).textContent = data.total_km.toFixed(1) + ' km';
+          
+          if (data.is_recovery) {
+            const badge = document.createElement('div');
+            badge.className = 'recovery-badge';
+            badge.textContent = '💤 Herstelweek';
+            document.getElementById(`recovery-${weekNumber}`).appendChild(badge);
+          }
+        })
+        .catch(e => {
+          document.getElementById(`week-${weekNumber}-count`).textContent = '?';
+          document.getElementById(`week-${weekNumber}-km`).textContent = '?';
+        });
+    }
+
+    function loadWeekDetail(weekNumber) {
+      window.location.href = `/planning/${weekNumber}`;
+    }
+
+    // Load all summaries on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.week-card');
+      cards.forEach(card => {
+        const btn = card.querySelector('.expand-btn') || card;
+        const weekNum = parseInt(btn.dataset.week);
+        if (weekNum) {
+          loadWeekSummary(weekNum);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

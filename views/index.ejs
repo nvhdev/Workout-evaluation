@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Strava Eval - Start</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container { 
+      max-width: 1000px; 
+      width: 100%;
+    }
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 50px;
+    }
+    .header h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+    .header p {
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: center;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+    .card-icon {
+      font-size: 4em;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-size: 1.8em;
+    }
+    .card p {
+      color: #666;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+    .card-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 30px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .card-button:hover {
+      transform: scale(1.05);
+    }
+    .footer {
+      text-align: center;
+      color: white;
+      margin-top: 50px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body class="home-page">
+  <%- include('partials/_header', { activePage: activePage, isAuthenticated: isAuthenticated, returnTo: returnTo }) %>
+  <div class="container">
+    <div class="header">
+      <h1>🏃 Strava Eval</h1>
+      <p>Trainingsplanning & Activiteitentracking</p>
+    </div>
+
+    <div class="cards">
+      <a href="/activities" class="card">
+        <div class="card-icon">📊</div>
+        <h2>Activiteiten</h2>
+        <p>Bekijk je gerealiseerde activiteiten van deze en vorige week. Controleer je pace, hartslag en splits van elke training.</p>
+        <div class="card-button">Naar Activiteiten →</div>
+      </a>
+
+      <a href="/planning" class="card">
+        <div class="card-icon">📅</div>
+        <h2>Trainingsplan</h2>
+        <p>Bekijk de geplande workouts per week. Plan je training, controleer zones en hartslag grenzen, en volg je progressie.</p>
+        <div class="card-button">Naar Trainingsplan →</div>
+      </a>
+
+      <a href="/evaluation" class="card">
+        <div class="card-icon">📈</div>
+        <h2>Evaluatie</h2>
+        <p>Vergelijk je geplande workouts met je afgewerkte activiteiten. Zie per dag wat je gepland had en wat je gedaan hebt.</p>
+        <div class="card-button">Naar Evaluatie →</div>
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>Made with 🏃 for better training</p>
+    </div>
+  </div>
+</body>
+</html>
